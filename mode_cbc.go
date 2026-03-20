@@ -33,16 +33,8 @@ func (m *CBC) Pkcs7() {
 	m.padder = pkcs7Padding{}
 }
 
-func (m *CBC) ZeroPadding() {
-	m.padder = zeroPadding{}
-}
-
 func (m *CBC) AnsiX923() {
 	m.padder = ansiX923Padding{}
-}
-
-func (m *CBC) Iso10126() {
-	m.padder = iso10126Padding{}
 }
 
 func (m *CBC) Encrypt(src []byte) ([]byte, error) {

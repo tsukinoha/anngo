@@ -29,16 +29,8 @@ func (m *ECB) Pkcs7() {
 	m.padder = pkcs7Padding{}
 }
 
-func (m *ECB) ZeroPadding() {
-	m.padder = zeroPadding{}
-}
-
 func (m *ECB) AnsiX923() {
 	m.padder = ansiX923Padding{}
-}
-
-func (m *ECB) Iso10126() {
-	m.padder = iso10126Padding{}
 }
 
 func (m *ECB) Encrypt(s []byte) ([]byte, error) {
