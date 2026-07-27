@@ -23,13 +23,9 @@ type (
 		Encrypt([]byte) ([]byte, error)
 		Decrypt([]byte) ([]byte, error)
 	}
-	zeroPadding struct {
-	}
 	pkcs7Padding struct {
 	}
 	ansiX923Padding struct {
-	}
-	iso10126Padding struct {
 	}
 	ECB struct {
 		key    []byte

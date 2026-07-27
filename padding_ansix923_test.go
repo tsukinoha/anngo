@@ -12,11 +12,11 @@ func TestAnsiX923Pad(t *testing.T) {
 	}{
 		{
 			s:        []byte{},
-			expected: []byte{},
+			expected: append(bytes.Repeat([]byte{0x00}, 15), []byte{0x10}...),
 		},
 		{
 			s:        []byte("0123456789abcdef"),
-			expected: append(append([]byte("0123456789abcdef"), bytes.Repeat([]byte{0x00}, 15)...), []byte{0x10}...),
+			expected: append([]byte("0123456789abcdef"), append(bytes.Repeat([]byte{0x00}, 15), []byte{0x10}...)...),
 		},
 		{
 			s:        []byte("0123456789abcdefg"),

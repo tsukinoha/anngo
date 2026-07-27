@@ -5,39 +5,28 @@ import (
 	"bytes"
 )
 
-func (p pkcs7Padding) Pad(src []byte) []byte {
-	length := len(src)
-	if length == 0 {
-		return src
-	}
+func (p pkcs7Padding) Pad(str []byte) []byte {
+	length := len(str)
 	count := BlockSize - length%BlockSize
-	if count == 0 {
-		count = BlockSize
-	}
-	dst := make([]byte, length+count)
-	copy(dst, src)
 	padding := bytes.Repeat([]byte{byte(count)}, count)
-	copy(dst[length:], padding)
-
-	return dst
+	str = append(str, padding...)
+	return str
 }
 
-func (p pkcs7Padding) Unpad(src []byte) []byte {
-	length := len(src)
-	if length == 0 || length%BlockSize != 0 {
-		return src
+func (p pkcs7Padding) Unpad(str []byte) []byte {
+	length := len(str)
+	if length < BlockSize {
+		return str
 	}
-	last := src[length-1]
+	last := str[length-1]
 	if last < 0x01 || last > 0x10 {
-		return src
+		return str
 	}
 	suffix := bytes.Repeat([]byte{last}, int(last))
 	idx := length - len(suffix)
-	if !bytes.Equal(suffix, src[idx:]) {
-		return src
+	if !bytes.Equal(suffix, str[idx:]) {
+		return str
 	}
 
-	dst := make([]byte, len(src[:idx]))
-	copy(dst, src[:idx])
-	return dst
+	return str[:idx]
 }

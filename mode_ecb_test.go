@@ -23,30 +23,11 @@ func TestECBPkcs7(t *testing.T) {
 	b := make([]byte, 128)
 	rand.Read(b)
 	m := NewECB(b[:16])
-	m.padder = zeroPadding{}
-	typ := reflect.TypeOf(m.padder).Name()
-	if typ != "zeroPadding" {
-		t.Errorf("not ready yet")
-	}
+	m.padder = pkcs7Padding{}
 	m.Pkcs7()
-	typ = reflect.TypeOf(m.padder).Name()
+	typ := reflect.TypeOf(m.padder).Name()
 	if typ != "pkcs7Padding" {
 		t.Errorf("Result: %s, Expected: %s", typ, "pkcs7Padding")
-	}
-}
-
-func TestECBZeroPadding(t *testing.T) {
-	b := make([]byte, 128)
-	rand.Read(b)
-	m := NewECB(b[:16])
-	typ := reflect.TypeOf(m.padder).Name()
-	if typ != "pkcs7Padding" {
-		t.Errorf("not ready yet")
-	}
-	m.ZeroPadding()
-	typ = reflect.TypeOf(m.padder).Name()
-	if typ != "zeroPadding" {
-		t.Errorf("Result: %s, Expected: %s", typ, "zeroPadding")
 	}
 }
 
@@ -65,21 +46,6 @@ func TestECBAnsiX923(t *testing.T) {
 	}
 }
 
-func TestECBIso10126(t *testing.T) {
-	b := make([]byte, 128)
-	rand.Read(b)
-	m := NewECB(b[:16])
-	typ := reflect.TypeOf(m.padder).Name()
-	if typ != "pkcs7Padding" {
-		t.Errorf("not ready yet")
-	}
-	m.Iso10126()
-	typ = reflect.TypeOf(m.padder).Name()
-	if typ != "iso10126Padding" {
-		t.Errorf("Result: %s, Expected: %s", typ, "iso10126Padding")
-	}
-}
-
 func TestECBEncrypt(t *testing.T) {
 	// Case
 	cases := []struct {
@@ -88,36 +54,6 @@ func TestECBEncrypt(t *testing.T) {
 		padder   padderInterface
 		expected []byte
 	}{
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte("abcdefghijklmn"),
-			padder:   zeroPadding{},
-			expected: []byte{199, 113, 79, 73, 58, 4, 204, 135, 10, 206, 188, 92, 32, 40, 98, 29},
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte("abcdefghijklmno"),
-			padder:   zeroPadding{},
-			expected: []byte{48, 242, 176, 181, 85, 22, 255, 90, 222, 190, 116, 226, 183, 221, 114, 130},
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte("abcdefghijklmnop"),
-			padder:   zeroPadding{},
-			expected: []byte{133, 98, 125, 240, 69, 30, 119, 64, 235, 38, 11, 29, 241, 244, 252, 100, 11, 155, 21, 218, 75, 68, 160, 245, 21, 29, 207, 196, 192, 31, 53, 213},
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte("abcdefghijklmnopq"),
-			padder:   zeroPadding{},
-			expected: []byte{133, 98, 125, 240, 69, 30, 119, 64, 235, 38, 11, 29, 241, 244, 252, 100, 127, 190, 79, 20, 6, 186, 186, 103, 88, 127, 236, 153, 65, 17, 246, 205},
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte("abcdefghijklmnopqr"),
-			padder:   zeroPadding{},
-			expected: []byte{133, 98, 125, 240, 69, 30, 119, 64, 235, 38, 11, 29, 241, 244, 252, 100, 211, 249, 163, 244, 147, 25, 4, 177, 118, 6, 115, 70, 74, 100, 11, 208},
-		},
 		{
 			key:      []byte("0123456789abcdef"),
 			data:     []byte("abcdefghijklmn"),
@@ -181,36 +117,6 @@ func TestECBEncrypt(t *testing.T) {
 		{
 			key:      []byte("0123456789abcdefghijklmn"),
 			data:     []byte("abcdefghijklmn"),
-			padder:   zeroPadding{},
-			expected: []byte{153, 190, 237, 2, 111, 164, 236, 104, 104, 4, 40, 126, 28, 215, 251, 244},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte("abcdefghijklmno"),
-			padder:   zeroPadding{},
-			expected: []byte{14, 98, 184, 175, 9, 234, 34, 54, 252, 156, 3, 93, 93, 71, 70, 255},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte("abcdefghijklmnop"),
-			padder:   zeroPadding{},
-			expected: []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 104, 154, 116, 165, 152, 220, 219, 46, 240, 210, 40, 201, 124, 50, 64, 153},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte("abcdefghijklmnopq"),
-			padder:   zeroPadding{},
-			expected: []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 3, 250, 163, 66, 137, 97, 178, 177, 244, 21, 194, 88, 162, 100, 46, 122},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte("abcdefghijklmnopqr"),
-			padder:   zeroPadding{},
-			expected: []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 31, 87, 171, 23, 91, 136, 216, 200, 96, 49, 248, 197, 113, 161, 226, 191},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte("abcdefghijklmn"),
 			padder:   pkcs7Padding{},
 			expected: []byte{204, 148, 233, 40, 238, 195, 248, 21, 162, 8, 190, 215, 182, 16, 108, 0},
 		},
@@ -267,36 +173,6 @@ func TestECBEncrypt(t *testing.T) {
 			data:     []byte("abcdefghijklmnopqr"),
 			padder:   ansiX923Padding{},
 			expected: []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 13, 161, 125, 73, 179, 158, 186, 46, 177, 199, 195, 74, 79, 56, 189, 163},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte("abcdefghijklmn"),
-			padder:   zeroPadding{},
-			expected: []byte{221, 147, 143, 43, 181, 108, 149, 221, 101, 51, 23, 116, 76, 122, 225, 99},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte("abcdefghijklmno"),
-			padder:   zeroPadding{},
-			expected: []byte{91, 190, 230, 253, 230, 119, 55, 106, 2, 62, 124, 65, 44, 157, 170, 91},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte("abcdefghijklmnop"),
-			padder:   zeroPadding{},
-			expected: []byte{130, 105, 207, 64, 216, 184, 142, 158, 220, 211, 235, 132, 78, 88, 51, 81, 128, 168, 70, 175, 85, 189, 95, 24, 197, 45, 224, 46, 243, 190, 32, 225},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte("abcdefghijklmnopq"),
-			padder:   zeroPadding{},
-			expected: []byte{130, 105, 207, 64, 216, 184, 142, 158, 220, 211, 235, 132, 78, 88, 51, 81, 1, 141, 206, 8, 15, 182, 46, 67, 44, 120, 138, 71, 178, 207, 1, 226},
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte("abcdefghijklmnopqr"),
-			padder:   zeroPadding{},
-			expected: []byte{130, 105, 207, 64, 216, 184, 142, 158, 220, 211, 235, 132, 78, 88, 51, 81, 154, 231, 56, 153, 225, 107, 213, 130, 191, 188, 3, 104, 75, 142, 125, 151},
 		},
 		{
 			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
@@ -380,36 +256,6 @@ func TestECBDecrypt(t *testing.T) {
 	}{
 		{
 			key:      []byte("0123456789abcdef"),
-			data:     []byte{199, 113, 79, 73, 58, 4, 204, 135, 10, 206, 188, 92, 32, 40, 98, 29},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmn"),
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte{48, 242, 176, 181, 85, 22, 255, 90, 222, 190, 116, 226, 183, 221, 114, 130},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmno"),
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte{133, 98, 125, 240, 69, 30, 119, 64, 235, 38, 11, 29, 241, 244, 252, 100, 11, 155, 21, 218, 75, 68, 160, 245, 21, 29, 207, 196, 192, 31, 53, 213},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnop"),
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte{133, 98, 125, 240, 69, 30, 119, 64, 235, 38, 11, 29, 241, 244, 252, 100, 127, 190, 79, 20, 6, 186, 186, 103, 88, 127, 236, 153, 65, 17, 246, 205},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnopq"),
-		},
-		{
-			key:      []byte("0123456789abcdef"),
-			data:     []byte{133, 98, 125, 240, 69, 30, 119, 64, 235, 38, 11, 29, 241, 244, 252, 100, 211, 249, 163, 244, 147, 25, 4, 177, 118, 6, 115, 70, 74, 100, 11, 208},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnopqr"),
-		},
-		{
-			key:      []byte("0123456789abcdef"),
 			data:     []byte{55, 21, 77, 54, 24, 109, 250, 166, 56, 152, 91, 46, 107, 97, 56, 134},
 			padder:   pkcs7Padding{},
 			expected: []byte("abcdefghijklmn"),
@@ -470,36 +316,6 @@ func TestECBDecrypt(t *testing.T) {
 		},
 		{
 			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte{153, 190, 237, 2, 111, 164, 236, 104, 104, 4, 40, 126, 28, 215, 251, 244},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmn"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte{14, 98, 184, 175, 9, 234, 34, 54, 252, 156, 3, 93, 93, 71, 70, 255},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmno"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 104, 154, 116, 165, 152, 220, 219, 46, 240, 210, 40, 201, 124, 50, 64, 153},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnop"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 3, 250, 163, 66, 137, 97, 178, 177, 244, 21, 194, 88, 162, 100, 46, 122},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnopq"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
-			data:     []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 31, 87, 171, 23, 91, 136, 216, 200, 96, 49, 248, 197, 113, 161, 226, 191},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnopqr"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmn"),
 			data:     []byte{204, 148, 233, 40, 238, 195, 248, 21, 162, 8, 190, 215, 182, 16, 108, 0},
 			padder:   pkcs7Padding{},
 			expected: []byte("abcdefghijklmn"),
@@ -556,36 +372,6 @@ func TestECBDecrypt(t *testing.T) {
 			key:      []byte("0123456789abcdefghijklmn"),
 			data:     []byte{113, 72, 25, 82, 152, 93, 166, 203, 12, 33, 238, 221, 141, 246, 82, 154, 13, 161, 125, 73, 179, 158, 186, 46, 177, 199, 195, 74, 79, 56, 189, 163},
 			padder:   ansiX923Padding{},
-			expected: []byte("abcdefghijklmnopqr"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte{221, 147, 143, 43, 181, 108, 149, 221, 101, 51, 23, 116, 76, 122, 225, 99},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmn"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte{91, 190, 230, 253, 230, 119, 55, 106, 2, 62, 124, 65, 44, 157, 170, 91},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmno"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte{130, 105, 207, 64, 216, 184, 142, 158, 220, 211, 235, 132, 78, 88, 51, 81, 128, 168, 70, 175, 85, 189, 95, 24, 197, 45, 224, 46, 243, 190, 32, 225},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnop"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte{130, 105, 207, 64, 216, 184, 142, 158, 220, 211, 235, 132, 78, 88, 51, 81, 1, 141, 206, 8, 15, 182, 46, 67, 44, 120, 138, 71, 178, 207, 1, 226},
-			padder:   zeroPadding{},
-			expected: []byte("abcdefghijklmnopq"),
-		},
-		{
-			key:      []byte("0123456789abcdefghijklmnopqrstuv"),
-			data:     []byte{130, 105, 207, 64, 216, 184, 142, 158, 220, 211, 235, 132, 78, 88, 51, 81, 154, 231, 56, 153, 225, 107, 213, 130, 191, 188, 3, 104, 75, 142, 125, 151},
-			padder:   zeroPadding{},
 			expected: []byte("abcdefghijklmnopqr"),
 		},
 		{

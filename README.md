@@ -5,7 +5,7 @@ Ann*Go is an encryption and decryption utility.
 Go has the crypto modules and this is an easy-to-use version of those modules.
 
 ## Install
-    # go get github.com/elfincafe/anngo
+    # go get github.com/tsukinoha/anngo
 
 ## Mode
 |No|Mode|Function|
@@ -26,7 +26,7 @@ Go has the crypto modules and this is an easy-to-use version of those modules.
 ## Usage
 ```go
 import (
-    "elfincafe/anngo"
+    "github.com/tsukinoha/anngo"
     "fmt"
     "os"
 )
