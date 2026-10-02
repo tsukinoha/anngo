@@ -23,7 +23,7 @@ func TestECBPkcs7(t *testing.T) {
 	b := make([]byte, 128)
 	rand.Read(b)
 	m := NewECB(b[:16])
-	m.padder = pkcs7Padding{}
+	m.padder = ansiX923Padding{}
 	m.Pkcs7()
 	typ := reflect.TypeOf(m.padder).Name()
 	if typ != "pkcs7Padding" {
@@ -37,7 +37,7 @@ func TestECBAnsiX923(t *testing.T) {
 	m := NewECB(b[:16])
 	typ := reflect.TypeOf(m.padder).Name()
 	if typ != "pkcs7Padding" {
-		t.Errorf("not ready yet")
+		t.Fatalf("default padder: %s, Expected: %s", typ, "pkcs7Padding")
 	}
 	m.AnsiX923()
 	typ = reflect.TypeOf(m.padder).Name()

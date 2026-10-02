@@ -4,7 +4,14 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"errors"
 	"fmt"
+)
+
+var (
+	ErrInvalidPadding        = errors.New("invalid padding")
+	ErrInvalidCiphertextSize = errors.New("ciphertext is not a multiple of the block size")
+	errNotInitialized        = errors.New("mode is not initialized; use the New* constructor")
 )
 
 const (
@@ -17,7 +24,7 @@ const (
 type (
 	padderInterface interface {
 		Pad([]byte) []byte
-		Unpad([]byte) []byte
+		Unpad([]byte) ([]byte, error)
 	}
 	ModeInterface interface {
 		Encrypt([]byte) ([]byte, error)
@@ -28,30 +35,32 @@ type (
 	ansiX923Padding struct {
 	}
 	ECB struct {
-		key    []byte
-		block  cipher.Block
-		padder padderInterface
+		block    cipher.Block
+		blockErr error
+		padder   padderInterface
+		macKey   []byte
 	}
 	CBC struct {
-		key    []byte
-		block  cipher.Block
-		padder padderInterface
-		iv     []byte
+		block    cipher.Block
+		blockErr error
+		padder   padderInterface
+		iv       []byte
+		macKey   []byte
 	}
 	CFB struct {
-		key   []byte
-		block cipher.Block
-		iv    []byte
+		block    cipher.Block
+		blockErr error
+		iv       []byte
 	}
 	OFB struct {
-		key   []byte
-		block cipher.Block
-		iv    []byte
+		block    cipher.Block
+		blockErr error
+		iv       []byte
 	}
 	CTR struct {
-		key   []byte
-		block cipher.Block
-		iv    []byte
+		block    cipher.Block
+		blockErr error
+		iv       []byte
 	}
 )
 
@@ -62,14 +71,24 @@ func GenerateIV(size int) ([]byte, error) {
 }
 
 func copyIV(d, s []byte) error {
-	length := len(s)
-	if len(d) < length {
-		return fmt.Errorf("destination is less than source")
-	}
-	if length == BlockSize {
-		copy(d, s)
-		return nil
-	} else {
+	if len(s) != BlockSize {
 		return fmt.Errorf("IV size must be %d bytes", BlockSize)
 	}
+	if len(d) < len(s) {
+		return fmt.Errorf("destination is less than source")
+	}
+	copy(d, s)
+	return nil
+}
+
+// checkBlock reports why a mode cannot encrypt/decrypt. The cipher is created
+// once in the constructor, so Encrypt/Decrypt only read shared state.
+func checkBlock(block cipher.Block, err error) error {
+	if err != nil {
+		return err
+	}
+	if block == nil {
+		return errNotInitialized
+	}
+	return nil
 }

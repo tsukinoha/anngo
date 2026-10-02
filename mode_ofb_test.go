@@ -116,12 +116,13 @@ func TestOFBEncrypt(t *testing.T) {
 			data:     []byte("abcdefghijklmnopqr"),
 			iv:       []byte("alouepc95malj23l"),
 			expected: []byte{206, 141, 7, 202, 201, 112, 156, 138, 186, 58, 158, 167, 144, 146, 122, 9, 61, 95},
-		}}
+		},
+	}
 	// Test
 	for i, c := range cases {
 		m := NewOFB(c.key)
 		m.SetIV(c.iv)
-		ret, _ := m.Decrypt(c.data)
+		ret, _ := m.Encrypt(c.data)
 		if !bytes.Equal(ret, c.expected) {
 			t.Errorf("\n<Case%d>\nResult:   %v\nExpected: %v\n", i, ret, c.expected)
 		}
@@ -245,6 +246,25 @@ func TestOFBIV(t *testing.T) {
 	if !bytes.Equal(m.iv, m.IV()) {
 		t.Errorf("Result:   %v\nExpected: %v\n", m.IV(), m.iv)
 	}
+	// The returned IV must be a copy.
+	orig := bytes.Clone(m.iv)
+	m.IV()[0] ^= 0xff
+	if !bytes.Equal(m.iv, orig) {
+		t.Errorf("internal IV modified via IV()\nResult:   %v\nExpected: %v\n", m.iv, orig)
+	}
+}
+
+func TestOFBSetIVInvalid(t *testing.T) {
+	m := NewOFB(make([]byte, 16))
+	orig := bytes.Clone(m.iv)
+	for i, iv := range [][]byte{nil, make([]byte, 15), make([]byte, 17), make([]byte, 32)} {
+		if err := m.SetIV(iv); err == nil {
+			t.Errorf("\n<Case%d>\nExpected error for IV length %d\n", i, len(iv))
+		}
+		if !bytes.Equal(m.iv, orig) {
+			t.Errorf("\n<Case%d>\nIV changed on error: %v\n", i, m.iv)
+		}
+	}
 }
 
 func TestOFBSetIV(t *testing.T) {
@@ -260,8 +280,10 @@ func TestOFBSetIV(t *testing.T) {
 	// Test
 	m := NewOFB(b[16:32])
 	for i, c := range cases {
-		m.SetIV(c.iv)
-		if !bytes.Equal(m.iv, c.iv) {
+		if err := m.SetIV(c.iv); err != nil {
+			t.Errorf("\n<Case%d>\nError: %v\n", i, err)
+		}
+		if !bytes.Equal(m.iv, c.expected) {
 			t.Errorf("\n<Case%d>\nResult:   %v\nExpected: %v\n", i, m.iv, c.expected)
 		}
 	}
