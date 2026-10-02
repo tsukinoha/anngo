@@ -23,7 +23,7 @@ func TestCBCPkcs7(t *testing.T) {
 	b := make([]byte, 128)
 	rand.Read(b)
 	m := NewCBC(b[:16])
-	m.padder = pkcs7Padding{}
+	m.padder = ansiX923Padding{}
 	m.Pkcs7()
 	typ := reflect.TypeOf(m.padder).Name()
 	if typ != "pkcs7Padding" {
@@ -37,7 +37,7 @@ func TestCBCAnsiX923(t *testing.T) {
 	m := NewCBC(b[:16])
 	typ := reflect.TypeOf(m.padder).Name()
 	if typ != "pkcs7Padding" {
-		t.Errorf("not ready yet")
+		t.Fatalf("default padder: %s, Expected: %s", typ, "pkcs7Padding")
 	}
 	m.AnsiX923()
 	typ = reflect.TypeOf(m.padder).Name()
@@ -518,6 +518,25 @@ func TestCBCIV(t *testing.T) {
 	if !bytes.Equal(m.iv, m.IV()) {
 		t.Errorf("Result:   %v\nExpected: %v\n", m.IV(), m.iv)
 	}
+	// The returned IV must be a copy.
+	orig := bytes.Clone(m.iv)
+	m.IV()[0] ^= 0xff
+	if !bytes.Equal(m.iv, orig) {
+		t.Errorf("internal IV modified via IV()\nResult:   %v\nExpected: %v\n", m.iv, orig)
+	}
+}
+
+func TestCBCSetIVInvalid(t *testing.T) {
+	m := NewCBC(make([]byte, 16))
+	orig := bytes.Clone(m.iv)
+	for i, iv := range [][]byte{nil, make([]byte, 15), make([]byte, 17), make([]byte, 32)} {
+		if err := m.SetIV(iv); err == nil {
+			t.Errorf("\n<Case%d>\nExpected error for IV length %d\n", i, len(iv))
+		}
+		if !bytes.Equal(m.iv, orig) {
+			t.Errorf("\n<Case%d>\nIV changed on error: %v\n", i, m.iv)
+		}
+	}
 }
 
 func TestCBCSetIV(t *testing.T) {
@@ -533,8 +552,10 @@ func TestCBCSetIV(t *testing.T) {
 	// Test
 	m := NewCBC(b[16:32])
 	for i, c := range cases {
-		m.SetIV(c.iv)
-		if !bytes.Equal(m.iv, c.iv) {
+		if err := m.SetIV(c.iv); err != nil {
+			t.Errorf("\n<Case%d>\nError: %v\n", i, err)
+		}
+		if !bytes.Equal(m.iv, c.expected) {
 			t.Errorf("\n<Case%d>\nResult:   %v\nExpected: %v\n", i, m.iv, c.expected)
 		}
 	}

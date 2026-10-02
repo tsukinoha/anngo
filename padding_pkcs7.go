@@ -3,30 +3,34 @@ package anngo
 
 import (
 	"bytes"
+	"crypto/subtle"
 )
 
 func (p pkcs7Padding) Pad(str []byte) []byte {
 	length := len(str)
 	count := BlockSize - length%BlockSize
-	padding := bytes.Repeat([]byte{byte(count)}, count)
-	str = append(str, padding...)
-	return str
+	dst := make([]byte, length+count)
+	copy(dst, str)
+	copy(dst[length:], bytes.Repeat([]byte{byte(count)}, count))
+	return dst
 }
 
-func (p pkcs7Padding) Unpad(str []byte) []byte {
+// Unpad checks the padding in constant time with respect to its content.
+func (p pkcs7Padding) Unpad(str []byte) ([]byte, error) {
 	length := len(str)
-	if length < BlockSize {
-		return str
+	if length == 0 || length%BlockSize != 0 {
+		return nil, ErrInvalidPadding
 	}
 	last := str[length-1]
-	if last < 0x01 || last > 0x10 {
-		return str
+	count := int(last)
+	good := subtle.ConstantTimeLessOrEq(1, count) & subtle.ConstantTimeLessOrEq(count, BlockSize)
+	for i := 1; i <= BlockSize; i++ {
+		inPad := subtle.ConstantTimeLessOrEq(i, count)
+		eq := subtle.ConstantTimeByteEq(str[length-i], last)
+		good &= subtle.ConstantTimeSelect(inPad, eq, 1)
 	}
-	suffix := bytes.Repeat([]byte{last}, int(last))
-	idx := length - len(suffix)
-	if !bytes.Equal(suffix, str[idx:]) {
-		return str
+	if good != 1 {
+		return nil, ErrInvalidPadding
 	}
-
-	return str[:idx]
+	return str[:length-count], nil
 }
